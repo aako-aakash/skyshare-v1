@@ -7,6 +7,15 @@
 This project is the **v1 production release** of SkyShare, built with a Python/FastAPI backend, PostgreSQL, ImageKit, and a Streamlit frontend.
 
 ---
+## 🚀 Live Demo
+
+[![Live Demo](https://img.shields.io/badge/Live-Demo-blue?style=for-the-badge)](https://skyshare-v1.streamlit.app/)
+
+👉 **[View Live Demo](https://skyshare-v1.streamlit.app/)**
+
+---
+
+---
 
 ## ✨ Features
 
