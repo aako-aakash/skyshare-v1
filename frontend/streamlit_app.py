@@ -10,10 +10,25 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-API_URL = os.getenv(
+
+def get_secret(name, default=None):
+    """Read Streamlit Cloud secrets first, then local environment variables."""
+    try:
+        value = st.secrets.get(name)
+        if value is not None:
+            return value
+    except Exception:
+        pass
+
+    return os.getenv(name, default)
+
+
+API_URL = get_secret(
     "API_URL",
     "http://127.0.0.1:8000",
 ).rstrip("/")
+
+API_KEY = get_secret("API_KEY")
 
 LINKEDIN_URL = "https://www.linkedin.com/in/aako-aakash/"
 GITHUB_URL = "https://github.com/aako-aakash"
@@ -36,6 +51,13 @@ st.set_page_config(
 )
 
 
+if not API_KEY:
+    st.error(
+        "⚠️ SkyShare API key is not configured. "
+        "Add `API_KEY` to Streamlit Cloud Secrets or your local `.env`."
+    )
+
+
 # ============================================================
 # SESSION STATE
 # ============================================================
@@ -56,19 +78,29 @@ for key, value in defaults.items():
 # ============================================================
 
 def api_headers():
-    if not st.session_state.token:
-        return {}
+    headers = {}
 
-    return {
-        "Authorization": f"Bearer {st.session_state.token}",
-    }
+    if API_KEY:
+        headers["X-API-Key"] = API_KEY
+
+    if st.session_state.token:
+        headers["Authorization"] = (
+            f"Bearer {st.session_state.token}"
+        )
+
+    return headers
 
 
 def api_request(method, endpoint, **kwargs):
     try:
+        headers = kwargs.pop("headers", {}) or {}
+        merged_headers = api_headers()
+        merged_headers.update(headers)
+
         return requests.request(
             method,
             f"{API_URL}{endpoint}",
+            headers=merged_headers,
             timeout=60,
             **kwargs,
         )

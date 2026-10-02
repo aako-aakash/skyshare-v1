@@ -10,6 +10,7 @@ from fastapi import (
     File,
     Form,
     HTTPException,
+    Request,
     UploadFile,
 )
 
@@ -54,6 +55,60 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
 )
+
+
+# ============================================================
+# API KEY SECURITY
+# ============================================================
+# SkyShare's Streamlit frontend sends this secret with every
+# backend request. Keep the value in environment variables only.
+# Never hard-code the real production key in source code.
+
+API_KEY = os.getenv("API_KEY")
+
+# These endpoints are intentionally public because Render uses
+# /health for health checks and the documentation is useful for
+# development/testing. All actual application API routes require
+# the API key.
+PUBLIC_PATHS = {
+    "/health",
+    "/docs",
+    "/redoc",
+    "/openapi.json",
+}
+
+
+@app.middleware("http")
+async def require_api_key(request: Request, call_next):
+    """Require the shared SkyShare API key for application routes."""
+
+    if request.url.path in PUBLIC_PATHS or request.method == "OPTIONS":
+        return await call_next(request)
+
+    if not API_KEY:
+        # Fail closed in production if the secret was not configured.
+        from fastapi.responses import JSONResponse
+
+        return JSONResponse(
+            status_code=500,
+            content={
+                "detail": "API_KEY is not configured on the server."
+            },
+        )
+
+    provided_key = request.headers.get("X-API-Key")
+
+    if not provided_key or provided_key != API_KEY:
+        from fastapi.responses import JSONResponse
+
+        return JSONResponse(
+            status_code=403,
+            content={
+                "detail": "Invalid or missing API key."
+            },
+        )
+
+    return await call_next(request)
 
 
 # ============================================================
@@ -433,4 +488,11 @@ async def health_check():
         "status": "ok",
         "service": "SkyShare API",
         "version": "1.0.0",
+    }
+
+@app.get("/")
+async def home():
+    return{
+        "Author" : "AAKASH",
+        "details" : "skyshare running well !!!"
     }
