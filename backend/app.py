@@ -490,9 +490,4 @@ async def health_check():
         "version": "1.0.0",
     }
 
-@app.get("/")
-async def home():
-    return{
-        "Author" : "AAKASH",
-        "details" : "skyshare running well !!!"
-    }
+

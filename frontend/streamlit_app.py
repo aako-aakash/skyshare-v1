@@ -11,12 +11,14 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-def get_secret(name, default=None):
+def get_secret(name, default=""):
     """Read Streamlit Cloud secrets first, then local environment variables."""
     try:
         value = st.secrets.get(name)
+
         if value is not None:
-            return value
+            return str(value)
+
     except Exception:
         pass
 
@@ -56,6 +58,7 @@ if not API_KEY:
         "⚠️ SkyShare API key is not configured. "
         "Add `API_KEY` to Streamlit Cloud Secrets or your local `.env`."
     )
+    st.stop()
 
 
 # ============================================================
